@@ -1,5 +1,3 @@
-package com.gregei.gboy.core;
-
 import java.util.Arrays;
 
 public class Memory {
@@ -28,6 +26,7 @@ public class Memory {
   // ------------------------------------------------------------------
 
   public int read8(int address) {
+    if (cartridge == null) return 0xFF;
     if (address <= 0x3FFF) {
       if (booting && address < 0x100) return bios[address];
       return cartridge.read8(address);
@@ -52,6 +51,13 @@ public class Memory {
       return 0;
     } else if (address <= 0xFF7F) {
       if (address == 0xFF00) return getJoypad();
+
+      // Serial (Link Cable)
+      if (linkCable != null) {
+        if (address == 0xFF01) return linkCable.readSB(); // SB
+        if (address == 0xFF02) return linkCable.readSC(); // SC
+      }
+
       return io[address - 0xFF00];
     } else if (address <= 0xFFFE) {
       return hRam[address - 0xFF80];
@@ -117,6 +123,7 @@ public class Memory {
     } else if (address <= 0xFEFF) {
       System.out.println("Can't write address " + Integer.toHexString(address));
     } else if (address <= 0xFF7F) {
+
       if (address == 0xFF04 || address == 0xFF44) {
         data = 0;
       } else if (address == 0xFF46) {
@@ -127,8 +134,15 @@ public class Memory {
       } else if (address == 0xFF50) {
         booting = false;
       }
-      // FF02 (link cable serial) — intentionally no-op
+
+      // Serial (Link Cable)
+      if (linkCable != null) {
+        if (address == 0xFF01) linkCable.writeSB(data); // SB
+        if (address == 0xFF02) linkCable.writeSC(data); // SC
+      }
+
       io[address - 0xFF00] = data;
+
     } else if (address <= 0xFFFE) {
       hRam[address - 0xFF80] = data;
     } else if (address == 0xFFFF) {
@@ -184,13 +198,22 @@ public class Memory {
   }
 
   // ------------------------------------------------------------------
-  // Accessors
+  // Accessors + ticking
   // ------------------------------------------------------------------
 
   public Cartridge getCartridge() { return cartridge; }
   public void setCartridge(Cartridge cartridge) { this.cartridge = cartridge; }
-  public void setLinkCable(Cable linkCable) { this.linkCable = linkCable; }
+
+  public void setLinkCable(Cable linkCable) {
+    this.linkCable = linkCable;
+    if (this.linkCable != null) this.linkCable.attachMemory(this);
+  }
+
   public void disconnectLinkCable() { linkCable = null; }
+
+  public void tick(int cpuCycles) {
+    if (linkCable != null) linkCable.tick(cpuCycles);
+  }
 
   public void reset() {
     Arrays.fill(bios,  0);
