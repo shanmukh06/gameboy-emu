@@ -1,5 +1,3 @@
-package com.gregei.gboy.core;
-
 import java.util.Arrays;
 
 public class Memory {
