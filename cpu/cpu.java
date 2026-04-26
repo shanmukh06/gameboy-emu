@@ -15,18 +15,17 @@ public class cpu {
     private static final int ADDR_IE = 0xFFFF;
 
     private final registers r;
-    private final memory mem;
+    private final Memory mem;
 
     private final op[] ops = new op[256];
     private final cbop[] cbOps = new cbop[256];
 
     private boolean halted = false;
 
-    // Interrupt master enable + EI delay
     private boolean ime = false;
     private boolean imeEnablePending = false;
 
-    public cpu(registers r, memory m) {
+    public cpu(registers r, Memory m) {
         this.r = r;
         this.mem = m;
         initOps();
