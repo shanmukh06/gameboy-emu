@@ -1,4 +1,3 @@
-import cpu.Gameboy; 
 import views.MainFrame;
 
 import javafx.application.Application;

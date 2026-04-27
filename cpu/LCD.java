@@ -34,7 +34,7 @@ public class LCD {
     private int lcdCycles = 0;
     
     private Memory memory;
-    private Z80 cpu;
+    private cpu cpu;
 
     public LCD() {
         // Constructor remains empty as in the original
@@ -262,8 +262,8 @@ public class LCD {
         this.memory = memory;
     }
 
-    public void setZ80(Z80 z80) {
-        this.cpu = z80;
+    public void setCpu(cpu cpu) {
+    this.cpu = cpu;
     }
 
     // --- Bitwise & Register Checking Helpers ---

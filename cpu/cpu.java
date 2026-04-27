@@ -32,6 +32,12 @@ public class cpu {
         initCbOps();
     }
 
+    public void requestInterrupt(int bit) {
+    int iff = mem.read8(0xFF0F) & 0xFF;   // IF
+    iff |= (1 << bit);
+    mem.write8(0xFF0F, iff);
+    }
+
     // ---------------- fetch helpers ----------------
     private int fetch8() {
         int v = mem.read8(r.getPC());

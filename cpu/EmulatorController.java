@@ -1,5 +1,3 @@
-import cpu.Cartridge;
-import cpu.Gameboy;
 import views.MainFrame; 
 
 import java.io.File;
