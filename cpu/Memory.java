@@ -47,8 +47,7 @@ public class Memory {
     } else if (address <= 0xFE9F) {
       return oam[address - 0xFE00];
     } else if (address <= 0xFEFF) {
-      System.out.println("Can't read address " + Integer.toHexString(address));
-      return 0;
+      return 0xFF;
     } else if (address <= 0xFF7F) {
       if (address == 0xFF00) return getJoypad();
 
@@ -121,7 +120,7 @@ public class Memory {
     } else if (address <= 0xFE9F) {
       oam[address - 0xFE00] = data;
     } else if (address <= 0xFEFF) {
-      System.out.println("Can't write address " + Integer.toHexString(address));
+      return;
     } else if (address <= 0xFF7F) {
 
       if (address == 0xFF04 || address == 0xFF44) {
@@ -171,7 +170,7 @@ public class Memory {
     } else if (address <= 0xFE9F) {
       oam[address - 0xFE00] = data;
     } else if (address <= 0xFEFF) {
-      System.out.println("Can't write address " + Integer.toHexString(address));
+      return;
     } else if (address <= 0xFF7F) {
       io[address - 0xFF00] = data;
     } else if (address <= 0xFFFE) {

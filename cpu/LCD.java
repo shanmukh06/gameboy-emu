@@ -41,43 +41,54 @@ public class LCD {
     }
 
     public void tick() {
-        int scanline = memory.read8(REG_LY);
-
-        // Determine and set LCD Mode
-        if (scanline >= LCD_HEIGHT) {
-            changeLCDMode(LcdMode.VBLANK);
-        } else {
-            if (lcdCycles <= LcdMode.HBLANK.cycles) {
-                changeLCDMode(LcdMode.HBLANK);
-            } else if (lcdCycles <= LcdMode.OAM.cycles) {
-                changeLCDMode(LcdMode.OAM);
-            } else if (lcdCycles <= LcdMode.DATA.cycles) {
-                changeLCDMode(LcdMode.DATA);
-            }
-        }
-
-        // Handle cycle timing (456 cycles per scanline)
-        if (lcdCycles > 456) {
-            if (scanline < LCD_HEIGHT) {
-                drawScanline();
-            } else if (scanline == LCD_HEIGHT) {
-                // VBLANK start, push frame to buffer
-                System.arraycopy(gfx, 0, buffer, 0, gfx.length);
-                cpu.requestInterrupt(0);
-            } else if (scanline > 153) {
-                // Reset scanline after VBLANK ends
-                total = 0;
-                memory.directWrite8(REG_LY, 0);
-            }
-
+        // If LCD is disabled, keep LY at 0 (prevents weird states)
+        if (!isLcdEnabled()) {
             lcdCycles = 0;
-            incScanline();
+            memory.directWrite8(REG_LY, 0);
+            return;
         }
 
         lcdCycles++;
-        total += lcdCycles;
-    }
 
+        // 456 cycles per scanline
+        if (lcdCycles >= 456) {
+            lcdCycles -= 456;
+
+            int ly = memory.read8(REG_LY);
+
+            // Draw visible scanlines
+            if (ly < LCD_HEIGHT) {
+                drawScanline();
+            }
+
+            // Enter VBlank at LY = 144
+            if (ly == LCD_HEIGHT) {
+                System.arraycopy(gfx, 0, buffer, 0, gfx.length);
+                cpu.requestInterrupt(0); // VBlank interrupt
+            }
+
+            // Advance LY
+            ly++;
+            if (ly > 153) {
+                ly = 0;
+            }
+
+            memory.directWrite8(REG_LY, ly);
+            checkLYC();
+        }
+
+        // Set STAT mode based on where we are inside the scanline
+        int ly = memory.read8(REG_LY);
+        if (ly >= 144) {
+            changeLCDMode(LcdMode.VBLANK);
+        } else if (lcdCycles < 80) {
+            changeLCDMode(LcdMode.OAM);
+        } else if (lcdCycles < 252) {
+            changeLCDMode(LcdMode.DATA);
+        } else {
+            changeLCDMode(LcdMode.HBLANK);
+        }
+    }
     private void drawScanline() {
         if (isBgDisplayEnabled()) {
             drawBackground();
@@ -306,15 +317,15 @@ public class LCD {
 
 
     enum LcdMode {
-        HBLANK(20560.3137254902 / 70224),
-        VBLANK(919.8035087719298 / 70224),
-        OAM(52428.8 / 70224),
-        DATA(24385.48837209302 / 70224);
+        HBLANK(204),
+        VBLANK(456),
+        OAM(80),
+        DATA(172);
 
         public final int cycles;
 
-        LcdMode(double cycles) {
-            this.cycles = (int) cycles;
+        LcdMode(int cycles) {
+            this.cycles = cycles;
         }
     }
 }
